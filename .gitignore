@@ -51,7 +51,6 @@ htmlcov/
 data/
 datasets/
 downloads/
-models/
 checkpoints/
 outputs/
 output/
@@ -243,9 +242,6 @@ private/
 
 # outputs
 outputs/
-evalscope/outputs/
-evalscope/*_temp.py
-evalscope/data/
 */output_res/*
 
 
