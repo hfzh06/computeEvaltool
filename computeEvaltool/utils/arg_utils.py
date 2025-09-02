@@ -2,7 +2,7 @@ import json
 from inspect import signature
 from argparse import Namespace
 
-from utils.io_utils import json_to_dict, yaml_to_dict
+from computeEvaltool.utils.io_utils import json_to_dict, yaml_to_dict
 
 
 class BaseArgument:
