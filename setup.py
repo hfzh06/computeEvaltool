@@ -133,15 +133,15 @@ def parse_requirements(fname='requirements.txt', with_version=True):
 if __name__ == '__main__':
     print('Usage: python3 setup.py bdist_wheel or pip3 install .[opencompass] for test')
 
-    install_requires, deps_link = parse_requirements('requirements/framework.txt')
+    install_requires, deps_link = parse_requirements('computeEvaltool/requirements/framework.txt')
 
     extra_requires = {}
     all_requires = []
-    extra_requires['perf'], _ = parse_requirements('requirements/perf.txt')
+    extra_requires['llmeval'], _ = parse_requirements('computeEvaltool/requirements/llmeval.txt')
 
 
     all_requires.extend(install_requires)
-    all_requires.extend(extra_requires['perf'])
+    all_requires.extend(extra_requires['llmeval'])
     extra_requires['all'] = all_requires
 
     setup(
