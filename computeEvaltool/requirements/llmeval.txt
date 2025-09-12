@@ -3,6 +3,8 @@ aiohttp
 fastapi
 # for calc result.
 numpy
+pandas
+openpyxl
 rich
 sse_starlette
 # for tokenizer
