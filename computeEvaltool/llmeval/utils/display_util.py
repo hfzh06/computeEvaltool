@@ -10,7 +10,9 @@ from rich.text import Text
 from computeEvaltool.utils.log import get_logger
 from .benchmark_util import Metrics
 from .db_util import PercentileMetrics
-
+import pandas as pd
+from openpyxl.styles import Font, Alignment, PatternFill
+from openpyxl.utils import get_column_letter
 logger = get_logger()
 
 
@@ -42,17 +44,29 @@ def analyze_results(all_results):
                 logger.warning(f'Warning: Test results for concurrency {concurrency} contain invalid data, skipped')
                 continue
 
+            # summary.append([
+            #     concurrency,
+            #     f'{rps:.2f}' if rps is not None else 'N/A',
+            #     f'{avg_latency:.3f}' if avg_latency is not None else 'N/A',
+            #     f'{p99_latency:.3f}' if p99_latency is not None else 'N/A',
+            #     f'{avg_tps:.2f}' if avg_tps is not None else 'N/A',
+            #     f'{avg_ttft:.3f}' if avg_ttft is not None else 'N/A',
+            #     f'{success_rate:.1f}%' if success_rate is not None else 'N/A',
+            #     f'{p99_ttft:.3f}' if p99_ttft is not None else 'N/A',
+            #     f'{avg_tpot:.3f}' if avg_tpot is not None else 'N/A',
+            #     f'{p99_tpot:.3f}' if p99_tpot is not None else 'N/A',
+            # ])
             summary.append([
-                concurrency,
-                f'{rps:.2f}' if rps is not None else 'N/A',
-                f'{avg_latency:.3f}' if avg_latency is not None else 'N/A',
-                f'{p99_latency:.3f}' if p99_latency is not None else 'N/A',
-                f'{avg_tps:.2f}' if avg_tps is not None else 'N/A',
-                f'{avg_ttft:.3f}' if avg_ttft is not None else 'N/A',
-                f'{success_rate:.1f}%' if success_rate is not None else 'N/A',
-                f'{p99_ttft:.3f}' if p99_ttft is not None else 'N/A',
-                f'{avg_tpot:.3f}' if avg_tpot is not None else 'N/A',
-                f'{p99_tpot:.3f}' if p99_tpot is not None else 'N/A',
+                int(concurrency) if concurrency is not None else 0,
+                float(rps) if rps is not None else float('nan'),
+                float(avg_latency) if avg_latency is not None else float('nan'),
+                float(p99_latency) if p99_latency is not None else float('nan'),
+                float(avg_tps) if avg_tps is not None else float('nan'),
+                float(avg_ttft) if avg_ttft is not None else float('nan'),
+                f'{success_rate:.1f}%' if success_rate is not None else 'N/A',  # 仅供控制台显示
+                float(p99_ttft) if p99_ttft is not None else float('nan'),
+                float(avg_tpot) if avg_tpot is not None else float('nan'),
+                float(p99_tpot) if p99_tpot is not None else float('nan'),
             ])
 
             total_tokens += total_metrics.get(Metrics.AVERAGE_OUTPUT_TOKENS_PER_REQUEST, 0) * total_metrics.get(
@@ -145,6 +159,73 @@ def print_summary(all_results, model_name):
 
     console.print('\n')
     console.print(table)
+    
+    # sava the summary table to an Excel file
+    # try:
+    #     columns = [
+    #         'Conc.', 'RPS', 'Avg Lat.(s)', 'P99 Lat.(s)', 'Gen. toks/s',
+    #         'Avg TTFT(s)', 'P99 TTFT(s)', 'Avg TPOT(s)', 'P99 TPOT(s)'
+    #     ]
+    #     summary_for_excel = [row[:6] + row[7:] for row in summary]  # Exclude Success Rate for Excel
+    #     df = pd.DataFrame(summary_for_excel, columns=columns)
+    #     excel_path = f"{model_name}_benchmark_summary.xlsx"
+    #     df.to_excel(excel_path, index=False)
+    #     logger.info(f"Summary table saved to {excel_path}")
+    # except Exception as e:
+    #     logger.warning(f"Failed to save summary to Excel: {str(e)}")
+    
+    try:
+        import pandas as pd
+        from openpyxl.utils import get_column_letter
+        from openpyxl.styles import Alignment
+
+        columns = [
+            'Conc.', 'RPS', 'Avg Lat.(s)', 'P99 Lat.(s)', 'Gen. toks/s',
+            'Avg TTFT(s)', 'P99 TTFT(s)', 'Avg TPOT(s)', 'P99 TPOT(s)'
+        ]
+        # 去掉第7列（Success Rate），只保留前6列和后3列
+        summary_for_excel = [row[:6] + row[7:] for row in summary]
+        df = pd.DataFrame(summary_for_excel, columns=columns)
+
+        # 数值化（Conc. 整数，其他转 float）
+        df['Conc.'] = pd.to_numeric(df['Conc.'], errors='coerce').astype('Int64')
+        for c in columns[1:]:
+            df[c] = pd.to_numeric(df[c], errors='coerce')
+
+        excel_path = f"{model_name}_benchmark_summary.xlsx"
+        with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="summary")
+            ws = writer.sheets["summary"]
+
+            # 冻结首行 + 自动筛选
+            ws.freeze_panes = "A2"
+            ws.auto_filter.ref = ws.dimensions
+
+            # 自动列宽 + 右对齐
+            for col_idx, col_name in enumerate(df.columns, start=1):
+                col_letter = get_column_letter(col_idx)
+                values = [str(col_name)] + [str(v) for v in df[col_name].tolist()]
+                max_len = min(max(len(v) for v in values) + 2, 36)
+                ws.column_dimensions[col_letter].width = max(8, max_len)
+                for r in range(2, ws.max_row + 1):
+                    ws.cell(row=r, column=col_idx).alignment = Alignment(horizontal="right")
+
+            # 数字显示格式：Conc. 无小数，其余四位小数
+            def fmt_col(name, numfmt):
+                if name not in df.columns:
+                    return
+                c = df.columns.get_loc(name) + 1
+                for r in range(2, ws.max_row + 1):
+                    ws.cell(row=r, column=c).number_format = numfmt
+
+            fmt_col('Conc.', '0')
+            for c in columns[1:]:
+                fmt_col(c, '0.0000')
+
+        logger.info(f"Summary table saved to {excel_path}")
+    except Exception as e:
+        logger.warning(f"Failed to save summary to Excel: {str(e)}")
+
 
     # Calculate and display best performance configuration
     try:
