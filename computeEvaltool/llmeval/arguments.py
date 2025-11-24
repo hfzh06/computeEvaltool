@@ -75,6 +75,15 @@ class Arguments(BaseArgument):
     top_p: Optional[float] = None  # Top-p (nucleus) sampling setting for the response
     top_k: Optional[int] = None  # Top-k sampling setting for the response
     extra_args: Optional[Dict[str, Any]] = None  # Extra arguments
+    
+    # RunTime 
+    gpu_num: int = 1  # GPU number for local inference
+    node_num: int = 1 # Node number for local inference
+    tp_size: int = 1  # Tensor parallel size for local inference
+    dp_size: int = 1  # Data parallel size for local inference
+    inference_engine: Optional[str] = "vllm"  # Inference engine for local inference
+    gpu_type: Optional[str] = "A800"  # GPU type for local inference
+    
 
     def __post_init__(self):
         # Set the default headers
@@ -198,6 +207,13 @@ def add_argument(parser: argparse.ArgumentParser):
     parser.add_argument('--extra-args', type=json.loads, default='{}', help='Extra arguments, should in JSON format',)
     # yapf: enable
 
+    # RunTime
+    parser.add_argument('--gpu-num', type=int, default=1, help='GPU number for local inference')
+    parser.add_argument('--node-num', type=int, default=1, help='Node number for local inference')
+    parser.add_argument('--tp-size', type=int, default=1, help='Tensor parallel size for local inference')
+    parser.add_argument('--dp-size', type=int, default=1, help='Data parallel size for local inference')
+    parser.add_argument('--inference-engine', type=str, default='vllm', help='Inference engine for local inference')
+    parser.add_argument('--gpu-type', type=str, default='A800', help='GPU type for local inference')
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Benchmark LLM service performance.')

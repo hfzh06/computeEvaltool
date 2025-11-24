@@ -60,7 +60,7 @@ def run_multi_benchmark(args: Arguments, output_path: str = None):
             logger.info(f'Sleeping for {args.sleep_interval} seconds before the next run...')
             time.sleep(args.sleep_interval)
     # Analyze results
-    print_summary(results, args.model_id)
+    print_summary(results, args.model_id, args)
     return results
 
 
@@ -91,7 +91,11 @@ def run_perf_benchmark(args):
         server.start()
     # Start benchmark
     if len(args.number) == 1:
-        return run_one_benchmark(args, output_path=output_path)
+        res = []
+        res_metric = run_one_benchmark(args, output_path=output_path)
+        res.append(res_metric)
+        print_summary(res, args.model_id, args)
+        return res
     else:
         return run_multi_benchmark(args, output_path=output_path)
 
