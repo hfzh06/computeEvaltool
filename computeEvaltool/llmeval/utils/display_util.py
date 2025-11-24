@@ -13,6 +13,9 @@ from .db_util import PercentileMetrics
 import pandas as pd
 from openpyxl.styles import Font, Alignment, PatternFill
 from openpyxl.utils import get_column_letter
+from ..arguments import Arguments
+import random
+import time
 logger = get_logger()
 
 
@@ -84,7 +87,7 @@ def analyze_results(all_results):
     return summary, total_tokens, total_time
 
 
-def print_summary(all_results, model_name):
+def print_summary(all_results, model_name, args: Arguments):
     """Print test results summary"""
     summary, total_tokens, total_time = analyze_results(all_results)
 
@@ -192,7 +195,8 @@ def print_summary(all_results, model_name):
         for c in columns[1:]:
             df[c] = pd.to_numeric(df[c], errors='coerce')
 
-        excel_path = f"{model_name}_benchmark_summary.xlsx"
+        rand_id = int(time.time() - 1763905562) + random.randint(1, 9999)
+        excel_path = f"{model_name}_{args.inference_engine}_node{args.node_num}_gpu_{args.gpu_num}_tp{args.tp_size}_dp{args.dp_size}_{rand_id}_benchmark_summary.xlsx"
         with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
             df.to_excel(writer, index=False, sheet_name="summary")
             ws = writer.sheets["summary"]
@@ -221,6 +225,9 @@ def print_summary(all_results, model_name):
             fmt_col('Conc.', '0')
             for c in columns[1:]:
                 fmt_col(c, '0.0000')
+                
+            ws['J1'] = 'Total Time'
+            ws['J2'] = total_time
 
         logger.info(f"Summary table saved to {excel_path}")
     except Exception as e:
