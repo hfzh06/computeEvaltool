@@ -6,8 +6,8 @@ class VisionArguments:
     """Arguments for vision model benchmarking."""
     
     def __init__(self):
-        self.model: str = "resnet18"
-        self.concurrency: int = 2
+        self.models: list[str] = ["resnet18"]  # 改为复数
+        self.concurrency: list[int] = [2]      # 改为列表
         self.timeout: int = 10
         self.hosts: list[str] = []
         self.ports: list[int] = [] 
@@ -19,23 +19,26 @@ class VisionArguments:
 def add_argument(parser: argparse.ArgumentParser):
     """Add arguments for vision benchmark."""
     
-    # Model configuration
+    # Model configuration - 支持多个模型
     parser.add_argument(
         '--model',
+        '--models',
         type=str,
-        default='resnet18',
-        choices=['resnet18', 'yolov10-s', 'vitlarge'],
-        help='Model name to benchmark (default: resnet18)'
+        nargs='+',
+        default=['resnet18'],
+        dest='models',
+        help='Model names to benchmark (default: resnet18). Can specify multiple models.'
     )
     
-    # Benchmark parameters
+    # Benchmark parameters - 支持多个并发数
     parser.add_argument(
         '--conc',
         '--concurrency',
         type=int,
-        default=2,
+        nargs='+',
+        default=[2],
         dest='concurrency',
-        help='Number of concurrent requests per endpoint (default: 2)'
+        help='Number of concurrent requests per endpoint (default: 2). Can specify multiple values.'
     )
     
     parser.add_argument(
@@ -52,16 +55,16 @@ def add_argument(parser: argparse.ArgumentParser):
         '--hosts',
         type=str,
         nargs='+',
-        default=['9.0.2.60', '9.0.3.19'],
-        help='List of host IPs (default: 9.0.2.60 9.0.3.19)'
+        default=['9.0.2.60'],
+        help='List of host IPs (default: 9.0.2.60)'
     )
     
     parser.add_argument(
         '--ports',
         type=int,
         nargs='+',
-        default=[30000, 30001],
-        help='List of port numbers (default: 30000 30001)'
+        default=[30000],
+        help='List of port numbers (default: 30000)'
     )
     
     parser.add_argument(
@@ -76,6 +79,13 @@ def add_argument(parser: argparse.ArgumentParser):
         type=Path,
         default=Path('../../cocodataset/val2017'),
         help='Path to image folder for testing (default: ../../cocodataset/val2017)'
+    )
+    
+    parser.add_argument(
+        '--image-count',
+        type=int,
+        default=100,
+        help='Number of images to preload for testing (default: 100)'
     )
     
     # Output configuration
