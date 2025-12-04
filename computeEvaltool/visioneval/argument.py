@@ -29,6 +29,34 @@ def add_argument(parser: argparse.ArgumentParser):
         dest='models',
         help='Model names to benchmark (default: resnet18). Can specify multiple models.'
     )
+
+        # Benchmark parameters
+    parser.add_argument(
+        '--adaptive',
+        action='store_true',
+        help='Enable adaptive concurrency testing (increases concurrency until RPS plateaus)'
+    )
+    
+    parser.add_argument(
+        '--max-concurrency',
+        type=int,
+        default=100,
+        help='Maximum concurrency limit for adaptive mode (default: 100)'
+    )
+    
+    parser.add_argument(
+        '--latency-threshold',
+        type=float,
+        default=0.10,
+        help='Latency increase threshold for stopping test in adaptive mode (default: 0.10 = 10%%)'
+    )
+    
+    parser.add_argument(
+        '--rps-threshold',
+        type=float,
+        default=0.05,
+        help='RPS increase threshold for stopping test in adaptive mode (default: 0.05 = 5%%)'
+    )
     
     # Benchmark parameters - 支持多个并发数
     parser.add_argument(

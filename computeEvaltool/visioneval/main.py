@@ -30,9 +30,9 @@ def run_vision_benchmark(args):
     # 创建输出目录
     args.output_dir.mkdir(parents=True, exist_ok=True)
     
-    logger.info("="*80)
+    logger.info("="*60)
     logger.info("Starting Vision Model Benchmark")
-    logger.info("="*80)
+    logger.info("="*60)
     logger.info(f"Models: {args.models}")
     logger.info(f"Concurrency levels: {args.concurrency}")
     logger.info(f"Duration per test: {args.timeout}s")
