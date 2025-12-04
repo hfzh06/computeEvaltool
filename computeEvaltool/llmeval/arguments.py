@@ -32,6 +32,7 @@ class Arguments(BaseArgument):
     parallel: Union[int, List[int]] = 1  # Number of parallel requests
     rate: int = -1  # Rate limit for requests (default: -1, no limit)
     sleep_interval: int = 5  # Sleep interval between performance runs, in seconds
+    auto_parallel: bool = False  # Automatically increase parallelism
 
     # Logging and debugging
     log_every_n_query: int = 10  # Log every N queries
@@ -106,14 +107,18 @@ class Arguments(BaseArgument):
         if self.apply_chat_template is None:
             self.apply_chat_template = self.url.strip('/').endswith('chat/completions')
 
-        # Set number and parallel to lists if they are integers
-        if isinstance(self.number, int):
-            self.number = [self.number]
-        if isinstance(self.parallel, int):
-            self.parallel = [self.parallel]
-        assert len(self.number) == len(
-            self.parallel
-        ), f'The length of number and parallel should be the same, but got number: {self.number} and parallel: {self.parallel}'  # noqa: E501
+        if self.auto_parallel:
+            self.number = []
+            self.parallel = []
+        else:
+            # Set number and parallel to lists if they are integers
+            if isinstance(self.number, int):
+                self.number = [self.number]
+            if isinstance(self.parallel, int):
+                self.parallel = [self.parallel]
+            assert len(self.number) == len(
+                self.parallel
+            ), f'The length of number and parallel should be the same, but got number: {self.number} and parallel: {self.parallel}'  # noqa: E501`
 
 
 class ParseKVAction(argparse.Action):
@@ -159,6 +164,8 @@ def add_argument(parser: argparse.ArgumentParser):
     parser.add_argument('--rate', type=int, default=-1, help='Number of requests per second. default None')
     parser.add_argument(
         '--sleep-interval', type=int, default=5, help='Sleep interval between performance runs, in seconds. Default 5')  # noqa: E501
+    parser.add_argument('--auto-parallel', action='store_true', default=False, 
+                        help='Automatically increase parallelism until performance no longer improves')   # noqa: E501
 
     # Logging and debugging
     parser.add_argument('--log-every-n-query', type=int, default=10, help='Logging every n query')
