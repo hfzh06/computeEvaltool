@@ -138,10 +138,12 @@ if __name__ == '__main__':
     extra_requires = {}
     all_requires = []
     extra_requires['llmeval'], _ = parse_requirements('computeEvaltool/requirements/llmeval.txt')
+    extra_requires['visioneval'], _ = parse_requirements('computeEvaltool/requirements/visioneval.txt')
 
 
     all_requires.extend(install_requires)
     all_requires.extend(extra_requires['llmeval'])
+    all_requires.extend(extra_requires['visioneval'])
     extra_requires['all'] = all_requires
 
     setup(
