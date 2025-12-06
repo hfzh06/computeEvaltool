@@ -16,6 +16,7 @@ from openpyxl.utils import get_column_letter
 from ..arguments import Arguments
 import random
 import time
+import os
 logger = get_logger()
 
 
@@ -195,8 +196,12 @@ def print_summary(all_results, model_name, args: Arguments):
         for c in columns[1:]:
             df[c] = pd.to_numeric(df[c], errors='coerce')
 
+        results_dir = 'results'
+        os.makedirs(results_dir, exist_ok=True)
+
         rand_id = int(time.time() - 1763905562) + random.randint(1, 9999)
-        excel_path = f"{model_name}_{args.inference_engine}_node{args.node_num}_gpu_{args.gpu_num}_tp{args.tp_size}_dp{args.dp_size}_{rand_id}_benchmark_summary.xlsx"
+        excel_filename = f"{model_name}_{args.inference_engine}_node{args.node_num}_gpu{args.gpu_num}_tp{args.tp_size}_dp{args.dp_size}_{rand_id}_benchmark_summary.xlsx"
+        excel_path = os.path.join(results_dir, excel_filename)
         with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
             df.to_excel(writer, index=False, sheet_name="summary")
             ws = writer.sheets["summary"]
